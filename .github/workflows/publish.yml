@@ -1,0 +1,32 @@
+name: Publish to NuGet
+on:
+  push:
+    tags:
+      - 'v*' 
+permissions:
+  id-token: write 
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest 
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: NuGet Login (OIDC Exchange)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: johntoshokan 
+
+      - name: Build and Pack
+        run: dotnet pack -c Release
+
+      - name: Publish Package
+        run: dotnet nuget push bin/Release/*.nupkg -k ${{ steps.login.outputs.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
